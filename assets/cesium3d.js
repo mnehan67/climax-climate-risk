@@ -1,9 +1,9 @@
 /* CLIMAX · CesiumJS + Cesium ion renderer (cinematic 3D).
-   - ion: Bing Maps aerial imagery (asset 2) + Cesium OSM Buildings for city context outside the analysed areas.
+   - Basemap: World Imagery raster tiles with attribution; no token needed. Optional Cesium ion adds 3D OSM buildings.
    - Ours: Sentinel-2 passes, water / persistence / depth / forecast layers (lon/lat-aligned PNGs from the pipeline),
      and the analysed OSM footprints as one per-instance-coloured Primitive per area (fast recolouring).
    - Swipe uses Cesium's native imagery splitDirection.
-   If ion is unreachable the globe still shows our own Sentinel-2 imagery, so nothing breaks offline. */
+   - TEST mode hides generated beige RGB tiles; simulated hazard masks stay explicitly labelled. */
 'use strict';
 (function () {
   const C = window.Cesium;
@@ -30,14 +30,17 @@
     v.clock.shouldAnimate = false;
     sc.screenSpaceCameraController.minimumZoomDistance = 120;
 
+    // Live UAE satellite geography beneath all AOIs. No Cesium-ion token required.
+    // Esri tiles are loaded from their service by the browser; respect provider terms.
+    const imagery = new C.UrlTemplateImageryProvider({
+      url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      credit: 'Basemap © Esri, Maxar, Earthstar Geographics, and the GIS User Community',
+      maximumLevel: 19
+    });
+    const base = v.imageryLayers.addImageryProvider(imagery, 0);
+    base.brightness = 0.88; base.saturation = 0.92; base.contrast = 1.1;
+    CS.ionOk = true; // status now means a real aerial basemap was configured, not that ion is connected
     if (token) {
-      try {
-        const base = C.ImageryLayer.fromProviderAsync(C.IonImageryProvider.fromAssetId(2));
-        base.brightness = 0.62; base.saturation = 0.55; base.contrast = 1.1; base.gamma = 1.05;
-        v.imageryLayers.add(base, 0);
-        base.readyEvent.addEventListener(() => { CS.ionOk = true; });
-        base.errorEvent.addEventListener(() => { CS.ionOk = false; });
-      } catch (e) { console.warn('ion imagery unavailable', e); }
       // city context: Cesium OSM Buildings, hidden inside our analysed areas (we draw those ourselves, coloured by data)
       C.createOsmBuildingsAsync().then(ts => {
         const inside = aois.map(r => `(\${feature['cesium#longitude']} > ${r[0]} && \${feature['cesium#longitude']} < ${r[2]} && \${feature['cesium#latitude']} > ${r[1]} && \${feature['cesium#latitude']} < ${r[3]})`).join(' || ');
@@ -109,9 +112,9 @@
     // st: {aoi, aois, rgbIndex, waterIndex, persist, depth, swipe, colorOf, visibleArea}
     for (const a of st.aois) {
       const L = CS.layers[a]; if (!L) continue; const act = a === st.aoi;
-      CS.fade(L.pre, act ? 1 : 0);
+      CS.fade(L.pre, act && st.mode === 'REAL' ? 0.96 : 0);
       for (const k of Object.keys(L)) {
-        if (k.startsWith('post')) CS.fade(L[k], act && st.rgbIndex === +k.slice(4) ? 1 : 0);
+        if (k.startsWith('post')) CS.fade(L[k], act && st.mode === 'REAL' && st.rgbIndex === +k.slice(4) ? 0.96 : 0);
         if (k.startsWith('water')) CS.fade(L[k], act && st.waterIndex === +k.slice(5) ? 0.9 : 0, 450);
       }
       CS.fade(L.persist, act && st.persist ? 0.92 : 0);
@@ -119,7 +122,7 @@
       CS.fade(L.pred, act && st.swipe ? 0.9 : 0);
       L.pred.splitDirection = st.swipe ? C.SplitDirection.LEFT : C.SplitDirection.NONE;
       L.persist.splitDirection = st.swipe ? C.SplitDirection.RIGHT : C.SplitDirection.NONE;
-      CS.recolor(a, act, st.colorOf);
+      CS.recolor(a, act && st.mode === 'REAL', st.colorOf); // don't put synthetic buildings on real basemap
     }
   };
 

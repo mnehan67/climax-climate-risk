@@ -36,6 +36,34 @@ function jsColor(f) {   // same logic as the MapLibre expression bColor(), for t
   if ((S.layers.water || S.layers.persist || S.layers.swipe) && S.k >= 0 && p.flooded && p.days >= day) return rampColor(p.days);
   return '#1f3a31';
 }
+// Live geographic CONTEXT only; the demo's TEST flood/loan values remain synthetic.
+// Aerial tiles are retrieved by the visitor's browser, not stored or redistributed.
+const AERIAL_TILE = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+const AERIAL_CREDIT = 'Basemap © Esri, Maxar, Earthstar Geographics, and the GIS User Community';
+function cityStyle() {
+  return { version: 8, sources: {
+    'aerial-context': { type: 'raster', tiles: [AERIAL_TILE], tileSize: 256, attribution: AERIAL_CREDIT }
+  }, layers: [
+    { id: 'bg', type: 'background', paint: { 'background-color': '#04100d' } },
+    { id: 'aerial-context', type: 'raster', source: 'aerial-context',
+      paint: { 'raster-opacity': 0.96, 'raster-saturation': -0.18, 'raster-contrast': 0.05 } }
+  ] };
+}
+function addCityBuildings(m) {
+  // Actual OSM footprints from a public vector-tile source; no API key required.
+  // Heights in OSM are incomplete, so these are contextual extrusions, not an authoritative city model.
+  if (m.getSource('osm-city')) return;
+  m.addSource('osm-city', { type: 'vector', url: 'https://tiles.openfreemap.org/planet' });
+  m.addLayer({ id: 'osm-3d-city', type: 'fill-extrusion', source: 'osm-city', 'source-layer': 'building',
+    minzoom: 13, filter: ['!=', ['get', 'hide_3d'], true],
+    paint: {
+      'fill-extrusion-color': '#b2c7bf',
+      'fill-extrusion-height': ['interpolate', ['linear'], ['zoom'], 13, 0, 14.5, ['coalesce', ['get', 'render_height'], 8]],
+      'fill-extrusion-base': ['coalesce', ['get', 'render_min_height'], 0],
+      'fill-extrusion-opacity': 0.50,
+      'fill-extrusion-vertical-gradient': true
+    } });
+}
 const PERSIST_RAMP = ['interpolate', ['linear'], ['get', 'days'], 0, '#ffd666', 3, '#ff8c42', 8, '#f03e5c', 15, '#b832c8', 30, '#7828dc'];
 
 /* ------------------------------------------------------------------ boot */
@@ -46,13 +74,20 @@ async function boot() {
   S.cfg = await api('/api/config');
   S.log = await api('/api/log');
   for (const a of S.cfg.aois) S.meta[a] = await api('/api/aoi/' + a);
-  S.aoi = S.cfg.aois.includes('alquoz') ? 'alquoz' : S.cfg.aois[0];
+  S.aoi = S.cfg.aois.includes('dxb') ? 'dxb' : S.cfg.aois[0];
   const test = S.cfg.mode === 'TEST';
   $('prov').classList.toggle('test', test);
   const nPass = S.cfg.aois.reduce((s, a) => s + S.meta[a].dates.length, 0);
   $('provText').textContent = test ? 'TEST DATA · RUN PIPELINE FOR REAL' : `REAL · SENTINEL-2 L2A · ${nPass} PASSES · ${S.cfg.aois.length} AREAS`;
   $('testMark').classList.toggle('hidden', !test);
-  if (test) $('qsub').textContent = 'synthetic loans · TEST buildings';
+  if (test) {
+    $('qsub').textContent = 'synthetic loans · TEST exposure';
+    document.querySelector('[data-layer=swipe]').textContent = 'TEST FORECAST vs WATER';
+    $('capSub').textContent = 'A real-world Dubai aerial basemap with simulated flood, building and credit-risk overlays. Not observed flood results.';
+    document.querySelector('.swipe-tag.left').innerHTML = 'TEST TERRAIN FORECAST<small>synthetic projection, not an operational model</small>';
+    document.querySelector('.swipe-tag.right').innerHTML = 'TEST WATER MASK<small>simulated water, NOT observed Sentinel-2 flooding</small>';
+  }
+
   $('aois').innerHTML = S.cfg.aois.map(a => `<button data-aoi="${a}">${esc(S.meta[a].short)}</button>`).join('');
   $$('#aois button').forEach(b => b.onclick = () => selectAoi(b.dataset.aoi, true));
   $('beta').value = S.cfg.defaults.beta; S.params.beta = S.cfg.defaults.beta;
@@ -72,12 +107,12 @@ async function setupMap() {
     try { await setupCesium(); return; }
     catch (e) { console.warn('Cesium failed, using MapLibre', e); toast('Cinematic 3D unavailable, switched to offline 3D'); CS = null; S.ready = false; $('map').innerHTML = ''; }
   }
-  $('rendBtn').textContent = '3D · LITE';
+  $('rendBtn').textContent = '3D · GLOBE';
   setupMapLibre();
 }
 
 async function setupCesium() {
-  $('rendBtn').textContent = '3D · CESIUM';
+  $('rendBtn').textContent = '3D · CITY';
   const cs = await CS3D.init('map', S.cfg.cesiumToken, S.cfg.aois.map(a => S.meta[a].rect));
   for (const a of S.cfg.aois) { await loadBuildings(a); await cs.addArea(a, S.meta[a], S.bld[a], jsColor); }
   CS = cs;
@@ -91,7 +126,7 @@ async function setupCesium() {
   await refreshStress();
   selectAoi(S.aoi, true);
   renderConsoleLog();
-  setTimeout(() => { if (CS && !CS.status().ion) toast('Cesium ion not reachable: showing our Sentinel-2 imagery only (still fully working).', 6000); }, 9000);
+  // Globe uses the public aerial basemap even without a Cesium ion token.
 }
 
 async function loadBuildings(a) {
@@ -104,10 +139,11 @@ function setupMapLibre() {
   const m0 = S.meta[S.aoi], c = center(m0.bbox);
   map = new maplibregl.Map({
     container: 'map', attributionControl: false, antialias: true, maxPitch: 78,
-    style: { version: 8, sources: {}, layers: [{ id: 'bg', type: 'background', paint: { 'background-color': '#04100d' } }] },
-    center: c, zoom: 12.2, pitch: 30, bearing: -10,
+    style: cityStyle(),
+    center: c, zoom: 12.2, pitch: 58, bearing: -18,
   });
   map.on('load', async () => {
+    addCityBuildings(map);
     for (const a of S.cfg.aois) await addArea(map, a, false);
     S.ready = true;
     await refreshStress();
@@ -140,7 +176,7 @@ async function addArea(m, a, forecastSide) {
   m.addSource(`b-${a}`, { type: 'geojson', data: S.bld[a], promoteId: 'id' });
   m.addLayer({ id: `b-${a}`, type: 'fill-extrusion', source: `b-${a}`, layout: { visibility: 'none' },
     paint: { 'fill-extrusion-color': '#1f3a31', 'fill-extrusion-height': ['get', 'height'], 'fill-extrusion-base': 0,
-      'fill-extrusion-opacity': 0.93, 'fill-extrusion-vertical-gradient': true } });
+      'fill-extrusion-opacity': 0.58, 'fill-extrusion-vertical-gradient': true } });
 }
 
 function centroid(g) {
@@ -176,7 +212,7 @@ function bColor(forecast) {
 function renderCesium() {
   const md = S.meta[S.aoi];
   const rgbK = S.k >= 0 ? [...md.dates.slice(0, S.k + 1)].reverse().find(d => d.rgb) : null;
-  CS.render({ aoi: S.aoi, aois: S.cfg.aois, rgbIndex: rgbK ? rgbK.index : -1,
+  CS.render({ aoi: S.aoi, aois: S.cfg.aois, mode: S.cfg.mode, rgbIndex: rgbK ? rgbK.index : -1,
     waterIndex: S.layers.water && !S.layers.persist && !S.layers.swipe && S.k >= 0 ? S.k : -1,
     persist: (S.layers.persist || S.layers.swipe) && S.k >= 0, depth: S.layers.depth && S.k >= 0, swipe: S.layers.swipe, colorOf: jsColor });
 }
@@ -187,14 +223,14 @@ function render() {
   for (const a of S.cfg.aois) {
     const act = a === S.aoi, md = S.meta[a];
     const rgbK = act && S.k >= 0 ? [...md.dates.slice(0, S.k + 1)].reverse().find(d => d.rgb) : null;
-    setVis(map, `pre-${a}`, act, 1, act);   // pre-storm image always underneath: no black gaps
+    setVis(map, `pre-${a}`, act && S.cfg.mode === 'REAL', 0.94, act && S.cfg.mode === 'REAL'); // never paint TEST beige imagery over real aerial context
     md.dates.forEach(d => {
-      if (d.rgb) setVis(map, `post-${a}-${d.index}`, !!(act && rgbK && rgbK.index === d.index), 1, act);
+      if (d.rgb) setVis(map, `post-${a}-${d.index}`, !!(S.cfg.mode === 'REAL' && act && rgbK && rgbK.index === d.index), 0.95, act && S.cfg.mode === 'REAL');
       setVis(map, `water-${a}-${d.index}`, act && S.layers.water && !S.layers.persist && !S.layers.swipe && S.k === d.index, 0.88, act);
     });
     setVis(map, `persist-${a}`, act && (S.layers.persist || S.layers.swipe) && S.k >= 0, 0.92, act);
     setVis(map, `depth-${a}`, act && S.layers.depth && S.k >= 0, 0.9, act);
-    setVis(map, `b-${a}`, act);
+    setVis(map, `b-${a}`, act && S.cfg.mode === 'REAL'); // synthetic polygons are not real Dubai buildings
     if (act) map.setPaintProperty(`b-${a}`, 'fill-extrusion-color', bColor(false));
   }
   renderScrub(); renderDayStat(); renderMarkers();
@@ -238,7 +274,7 @@ function flyArea(a, opt = {}) {
     heading: opt.bearing ?? -18, duration: opt.duration ?? 2600 });
   const b = S.meta[a].bbox;
   const cam = map.cameraForBounds([[b[0], b[1]], [b[2], b[3]]], { padding: { top: 90, bottom: 190, left: window.innerWidth > 900 ? 380 : 20, right: window.innerWidth > 900 ? 420 : 20 }, bearing: -18 });
-  map.flyTo({ ...cam, zoom: cam.zoom + (opt.zoom || 0.45), pitch: opt.pitch ?? 58, bearing: opt.bearing ?? -18, duration: opt.duration ?? 2600, essential: true });
+  map.flyTo({ ...cam, zoom: cam.zoom + (opt.zoom || 0.85), pitch: opt.pitch ?? 64, bearing: opt.bearing ?? -22, duration: opt.duration ?? 2600, essential: true });
 }
 
 /* ------------------------------------------------------------------ stress + impact */
@@ -448,9 +484,9 @@ async function enableSwipe(on) {
 function buildB() {
   return new Promise(res => {
     S.mapB = new maplibregl.Map({ container: 'mapB', attributionControl: false, interactive: false, antialias: true, maxPitch: 78,
-      style: { version: 8, sources: {}, layers: [{ id: 'bg', type: 'background', paint: { 'background-color': '#04100d' } }] },
+      style: cityStyle(),
       center: map.getCenter(), zoom: map.getZoom(), pitch: map.getPitch(), bearing: map.getBearing() });
-    S.mapB.on('load', async () => { for (const a of S.cfg.aois) await addArea(S.mapB, a, true); S.readyB = true; applyStatesB(); renderB(); res(); });
+    S.mapB.on('load', async () => { addCityBuildings(S.mapB); for (const a of S.cfg.aois) await addArea(S.mapB, a, true); S.readyB = true; applyStatesB(); renderB(); res(); });
   });
 }
 function rebuildB() { renderB(); }
@@ -459,10 +495,10 @@ function renderB() {
   const m = S.mapB; if (!m || !S.readyB) return;
   for (const a of S.cfg.aois) {
     const act = a === S.aoi;
-    setVis(m, `pre-${a}`, act, 1);
+    setVis(m, `pre-${a}`, act && S.cfg.mode === 'REAL', 0.95);
     S.meta[a].dates.forEach(d => d.rgb && setVis(m, `post-${a}-${d.index}`, false));
     setVis(m, `pred-${a}`, act, 0.85);
-    setVis(m, `b-${a}`, act); if (act) m.setPaintProperty(`b-${a}`, 'fill-extrusion-color', bColor(true));
+    setVis(m, `b-${a}`, act && S.cfg.mode === 'REAL'); if (act) m.setPaintProperty(`b-${a}`, 'fill-extrusion-color', bColor(true));
   }
   syncB();
 }
@@ -504,7 +540,7 @@ function caption(eye, title, sub, chips = []) {
 function defaultCaption() {
   const md = S.meta[S.aoi], t = S.cfg.mode === 'TEST';
   caption('CBUAE CHALLENGE #1 · CLIMATE RISK FOR BANKS', 'Floods in Dubai<br><em>don\'t just hit. They stay.</em>',
-    'We measure how long water stayed around every building from free satellite data, and turn it into credit risk.',
+    t ? 'Real Dubai aerial imagery for geographic context; flood persistence, buildings and credit-risk figures are a clearly labelled TEST simulation.' : 'We measure how long water stayed around buildings from Sentinel-2 observations, then explore possible credit-risk sensitivity.',
     [[t ? 'test' : 'real', 'WATER', t ? 'TEST DATA' : 'SENTINEL-2 MEASURED'], [t ? 'test' : 'real', 'BUILDINGS', t ? 'TEST' : 'OSM REAL'], ['syn', 'LOANS', 'SYNTHETIC'], [S.cfg.gov ? 'real' : 'syn', 'COLLATERAL AED/m²', S.cfg.gov ? 'DLD · DATA.DUBAI' : 'SYNTHETIC'], ['', 'AREA', md.short]]);
 }
 async function wait(ms) { const t0 = Date.now(); while (Date.now() - t0 < ms) { if (S.skip || !S.story) return; await sleep(60); } }
@@ -596,6 +632,10 @@ function wireUi() {
   $('memoBtn').onclick = () => window.open('/api/memo?' + new URLSearchParams(S.params), '_blank');
   $('exportBtn').onclick = () => { location.href = '/api/export?' + new URLSearchParams(S.params); };
   $('sourcesBtn').onclick = openSources;
+  $('uaeBtn').onclick = () => {
+    if (CS) CS.flyRect([51.55, 22.65, 56.5, 26.3], { heading: -18, pitch: -54, range: 580000, duration: 1900 });
+    else if (map) map.flyTo({ center: [54.7, 24.8], zoom: 7.6, pitch: 43, bearing: -12, duration: 1900 });
+  };
   $('rendBtn').onclick = () => { const u = new URL(location.href); u.searchParams.set('renderer', CS ? 'lite' : 'cesium'); location.href = u.toString(); };
   $('drawerX').onclick = closeDrawer; $('drawerBg').onclick = closeDrawer;
   $('beta').oninput = e => { S.params.beta = +e.target.value; $('betaV').textContent = S.params.beta.toFixed(2); clearTimeout(wireUi.t); wireUi.t = setTimeout(refreshStress, 180); };

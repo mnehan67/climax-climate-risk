@@ -11,7 +11,7 @@ button,input{font:inherit;color:inherit}
 #app{position:fixed;inset:0}
 .map{position:absolute;inset:0}
 .map-b{z-index:1}
-.maplibregl-ctrl-attrib{display:none}
+.maplibregl-ctrl-attrib{display:none} /* credit provided continuously in the fixed .attrib bar */
 .vignette{position:absolute;inset:0;pointer-events:none;z-index:2;
   background:radial-gradient(120% 90% at 55% 45%,transparent 45%,rgba(2,9,7,.72) 100%),linear-gradient(180deg,rgba(2,9,7,.75),transparent 18%,transparent 70%,rgba(2,9,7,.9))}
 .rain{position:absolute;inset:0;z-index:3;pointer-events:none;opacity:0;transition:opacity .8s}
@@ -214,3 +214,9 @@ input[type=range]{width:100%;accent-color:var(--mint)}
 .cs-credits{position:absolute;z-index:9;right:22px;bottom:2px;font-size:9px;color:rgba(143,176,162,.7);max-width:40vw;overflow:hidden;white-space:nowrap}
 .cs-credits img{height:12px;vertical-align:middle;opacity:.8}
 .cs-credits a{color:inherit}
+
+/* UAE overview button on desktop, integrated into the existing navigation */
+#uaeBtn{white-space:nowrap;border-color:rgba(146,223,183,.35);color:var(--mint);background:rgba(5,20,16,.65)}
+#uaeBtn:hover{background:rgba(146,223,183,.16)}
+/* Render the test watermark visibly but without hiding the aerial photography */
+.test-mark{font-size:18px;letter-spacing:.13em;top:69%;color:rgba(255,110,85,.60);border-color:rgba(255,110,85,.45);background:rgba(4,16,13,.62);padding:11px 16px;transform:translate(-50%,-50%) rotate(-7deg)}

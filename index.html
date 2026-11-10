@@ -18,17 +18,18 @@
     <span class="swipe-tag right">SATELLITE OBSERVED<small>what Sentinel-2 actually saw</small></span></div>
   <canvas id="rain" class="rain" aria-hidden="true"></canvas><div id="flash" class="flash"></div>
   <div id="vignette" class="vignette"></div>
-  <div id="testMark" class="test-mark hidden">TEST DATA · NOT SATELLITE OBSERVATIONS · RUN THE PIPELINE</div>
+  <div id="testMark" class="test-mark hidden">SIMULATED RISK · NOT OBSERVED FLOODING</div>
 
   <header class="top">
     <div class="brand"><svg viewBox="0 0 32 34" width="26" height="27" aria-hidden="true"><path d="M2 28 14 4l7 15 5-8 6 17H2Z" fill="#92dfb7"/><path d="M14 4 21 19l-6 9H2L14 4Z" fill="#19b16d"/><path d="m26 11 6 17H19l7-17Z" fill="#d4fbe0"/></svg><span>climax<b>.</b></span></div>
     <div class="prov" id="prov"><i></i><span id="provText">LOADING</span></div>
     <nav class="aois" id="aois" aria-label="Area"></nav>
+    <button id="uaeBtn" class="btn ghost" title="Zoom out to the UAE satellite overview">UAE ↗</button>
     <div class="actions">
       <button id="storyBtn" class="btn primary">▶ PLAY STORY</button>
       <button id="memoBtn" class="btn">MEMO ↗</button>
       <button id="exportBtn" class="btn">AUDIT ↓</button>
-      <button id="rendBtn" class="btn ghost" title="Switch between CesiumJS (needs internet) and offline 3D">3D</button>
+      <button id="rendBtn" class="btn ghost" title="Switch between a 3D map with OSM buildings and a Cesium globe; aerial imagery needs internet">3D</button>
       <button id="sourcesBtn" class="btn ghost">SOURCES</button>
     </div>
   </header>
@@ -98,7 +99,7 @@
   <div id="drawerBg" class="drawer-bg hidden"></div>
   <aside id="drawer" class="drawer hidden" role="dialog" aria-modal="true"><button id="drawerX" class="x" aria-label="Close">×</button><div id="drawerBody"></div></aside>
   <div id="toast" class="toast hidden" role="status"></div>
-  <div class="attrib">Contains modified Copernicus Sentinel data 2024 · Copernicus DEM © DLR/Airbus · © OpenStreetMap contributors (ODbL) · Loans synthetic</div>
+  <div class="attrib">Aerial basemap © Esri & imagery partners · 3D buildings © OpenStreetMap contributors (ODbL) · TEST flood/loan overlays simulated · Real Sentinel-2 only in REAL mode</div>
 </div>
 <script src="assets/vendor/maplibre-gl.js"></script>
 <script>window.CESIUM_BASE_URL = 'assets/vendor/cesium/';</script>
