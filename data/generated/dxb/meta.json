@@ -1,0 +1,179 @@
+{
+ "aoi": "dxb",
+ "name": "DXB Airport \u00b7 Garhoud \u00b7 Rashidiya",
+ "short": "DXB",
+ "why": "Airport operations disrupted (2,155 cancellations, Dubai Airports); dense logistics exposure.",
+ "bbox": [
+  55.33,
+  25.222,
+  55.392,
+  25.278
+ ],
+ "corners": [
+  [
+   55.329234,
+   25.277991
+  ],
+  [
+   55.391981,
+   25.278689
+  ],
+  [
+   55.392727,
+   25.221998
+  ],
+  [
+   55.33001,
+   25.221302
+  ]
+ ],
+ "rect": [
+  55.329234,
+  25.221302,
+  55.392727,
+  25.278689
+ ],
+ "grid": {
+  "w": 632,
+  "h": 628,
+  "res_m": 10,
+  "epsg": 32640
+ },
+ "mode": "TEST",
+ "event_date": "2024-04-16",
+ "pre": {
+  "date": "2024-04-11",
+  "scenes": [
+   "TEST-PRE"
+  ],
+  "valid_frac": 1.0,
+  "mndwi_threshold": 0.0
+ },
+ "dates": [
+  {
+   "index": 0,
+   "date": "2024-04-17",
+   "day": 1,
+   "water": "water_00.png",
+   "rgb": "rgb_post_00.jpg",
+   "valid_frac": 1.0,
+   "wet_km2": 2.999,
+   "mndwi_threshold": 0.107,
+   "scenes": [
+    "TEST-POST-0"
+   ]
+  },
+  {
+   "index": 1,
+   "date": "2024-04-22",
+   "day": 6,
+   "water": "water_01.png",
+   "rgb": "rgb_post_01.jpg",
+   "valid_frac": 1.0,
+   "wet_km2": 1.738,
+   "mndwi_threshold": 0.095,
+   "scenes": [
+    "TEST-POST-1"
+   ]
+  },
+  {
+   "index": 2,
+   "date": "2024-04-27",
+   "day": 11,
+   "water": "water_02.png",
+   "rgb": "rgb_post_02.jpg",
+   "valid_frac": 1.0,
+   "wet_km2": 1.101,
+   "mndwi_threshold": 0.105,
+   "scenes": [
+    "TEST-POST-2"
+   ]
+  },
+  {
+   "index": 3,
+   "date": "2024-05-02",
+   "day": 16,
+   "water": "water_03.png",
+   "rgb": "rgb_post_03.jpg",
+   "valid_frac": 1.0,
+   "wet_km2": 0.615,
+   "mndwi_threshold": 0.0,
+   "scenes": [
+    "TEST-POST-3"
+   ]
+  },
+  {
+   "index": 4,
+   "date": "2024-05-12",
+   "day": 26,
+   "water": "water_04.png",
+   "rgb": "rgb_post_04.jpg",
+   "valid_frac": 1.0,
+   "wet_km2": 0.231,
+   "mndwi_threshold": 0.0,
+   "scenes": [
+    "TEST-POST-4"
+   ]
+  }
+ ],
+ "stats": {
+  "aoi_km2": 39.69,
+  "flooded_km2": 2.999,
+  "still_wet_at_last_obs_km2": 0.231,
+  "area_wet_on_or_after_day_km2": {
+   "1": 2.999,
+   "6": 1.738,
+   "11": 1.101,
+   "16": 0.615,
+   "26": 0.231
+  },
+  "buildings": 1609,
+  "buildings_flooded": 177,
+  "buildings_flooded_7d": 68,
+  "median_depth_m": 0.45,
+  "dem": {
+   "min": 4.9,
+   "max": 10.7
+  }
+ },
+ "validation": {
+  "params": {
+   "depression_depth_m": 0.1,
+   "tpi_below_m": 1.0
+  },
+  "calibration": {
+   "tp": 16427,
+   "fp": 817,
+   "fn": 8,
+   "tn": 181196,
+   "precision": 0.953,
+   "recall": 1.0,
+   "f1": 0.976,
+   "iou": 0.952
+  },
+  "holdout": {
+   "tp": 13553,
+   "fp": 930,
+   "fn": 5,
+   "tn": 183960,
+   "precision": 0.936,
+   "recall": 1.0,
+   "f1": 0.967,
+   "iou": 0.935
+  },
+  "random_baseline_holdout": {
+   "tp": 982,
+   "fp": 13566,
+   "fn": 12576,
+   "tn": 171324,
+   "precision": 0.068,
+   "recall": 0.072,
+   "f1": 0.07,
+   "iou": 0.036
+  },
+  "split": "west half calibrates, east half is held out (spatial holdout)"
+ },
+ "notes": [
+  "TEST DATA: procedurally generated. Not satellite observations. Run python3 -m pipeline.run_all for real data."
+ ]
+}

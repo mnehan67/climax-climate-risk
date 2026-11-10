@@ -1,0 +1,14 @@
+# Render Blueprint: no web dependencies; all demo assets are committed.
+services:
+  - type: web
+    name: climax-climate-risk
+    runtime: python
+    plan: free
+    buildCommand: python -m compileall -q server.py engine.py agent.py memo.py pipeline
+    startCommand: python server.py --no-browser
+    healthCheckPath: /api/health
+    envVars:
+      - key: HOST
+        value: 0.0.0.0
+      - key: CLIMAX_PUBLIC
+        value: '1'

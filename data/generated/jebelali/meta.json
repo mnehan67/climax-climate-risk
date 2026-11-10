@@ -1,0 +1,179 @@
+{
+ "aoi": "jebelali",
+ "name": "Al Furjan \u00b7 Discovery Gardens \u00b7 Jebel Ali",
+ "short": "JEBEL ALI",
+ "why": "Residential + light-industrial; waterlogged routes reported days after the storm; visible in ESA's 17 Apr Sentinel-2 image.",
+ "bbox": [
+  55.11,
+  25.005,
+  55.172,
+  25.061
+ ],
+ "corners": [
+  [
+   55.109142,
+   25.060989
+  ],
+  [
+   55.171968,
+   25.061776
+  ],
+  [
+   55.17281,
+   25.005
+  ],
+  [
+   55.110012,
+   25.004215
+  ]
+ ],
+ "rect": [
+  55.109142,
+  25.004215,
+  55.17281,
+  25.061776
+ ],
+ "grid": {
+  "w": 634,
+  "h": 629,
+  "res_m": 10,
+  "epsg": 32640
+ },
+ "mode": "TEST",
+ "event_date": "2024-04-16",
+ "pre": {
+  "date": "2024-04-11",
+  "scenes": [
+   "TEST-PRE"
+  ],
+  "valid_frac": 1.0,
+  "mndwi_threshold": 0.0
+ },
+ "dates": [
+  {
+   "index": 0,
+   "date": "2024-04-17",
+   "day": 1,
+   "water": "water_00.png",
+   "rgb": "rgb_post_00.jpg",
+   "valid_frac": 1.0,
+   "wet_km2": 4.489,
+   "mndwi_threshold": 0.086,
+   "scenes": [
+    "TEST-POST-0"
+   ]
+  },
+  {
+   "index": 1,
+   "date": "2024-04-22",
+   "day": 6,
+   "water": "water_01.png",
+   "rgb": "rgb_post_01.jpg",
+   "valid_frac": 1.0,
+   "wet_km2": 2.823,
+   "mndwi_threshold": 0.107,
+   "scenes": [
+    "TEST-POST-1"
+   ]
+  },
+  {
+   "index": 2,
+   "date": "2024-04-27",
+   "day": 11,
+   "water": "water_02.png",
+   "rgb": "rgb_post_02.jpg",
+   "valid_frac": 1.0,
+   "wet_km2": 1.725,
+   "mndwi_threshold": 0.0,
+   "scenes": [
+    "TEST-POST-2"
+   ]
+  },
+  {
+   "index": 3,
+   "date": "2024-05-02",
+   "day": 16,
+   "water": "water_03.png",
+   "rgb": "rgb_post_03.jpg",
+   "valid_frac": 1.0,
+   "wet_km2": 1.024,
+   "mndwi_threshold": 0.108,
+   "scenes": [
+    "TEST-POST-3"
+   ]
+  },
+  {
+   "index": 4,
+   "date": "2024-05-12",
+   "day": 26,
+   "water": "water_04.png",
+   "rgb": "rgb_post_04.jpg",
+   "valid_frac": 1.0,
+   "wet_km2": 0.532,
+   "mndwi_threshold": 0.0,
+   "scenes": [
+    "TEST-POST-4"
+   ]
+  }
+ ],
+ "stats": {
+  "aoi_km2": 39.88,
+  "flooded_km2": 4.489,
+  "still_wet_at_last_obs_km2": 0.532,
+  "area_wet_on_or_after_day_km2": {
+   "1": 4.489,
+   "6": 2.823,
+   "11": 1.725,
+   "16": 1.024,
+   "26": 0.532
+  },
+  "buildings": 1627,
+  "buildings_flooded": 217,
+  "buildings_flooded_7d": 89,
+  "median_depth_m": 0.47,
+  "dem": {
+   "min": 4.7,
+   "max": 10.8
+  }
+ },
+ "validation": {
+  "params": {
+   "depression_depth_m": 0.1,
+   "tpi_below_m": 1.0
+  },
+  "calibration": {
+   "tp": 23423,
+   "fp": 856,
+   "fn": 11,
+   "tn": 175103,
+   "precision": 0.965,
+   "recall": 1.0,
+   "f1": 0.982,
+   "iou": 0.964
+  },
+  "holdout": {
+   "tp": 21439,
+   "fp": 1033,
+   "fn": 15,
+   "tn": 176906,
+   "precision": 0.954,
+   "recall": 0.999,
+   "f1": 0.976,
+   "iou": 0.953
+  },
+  "random_baseline_holdout": {
+   "tp": 2422,
+   "fp": 20160,
+   "fn": 19032,
+   "tn": 157779,
+   "precision": 0.107,
+   "recall": 0.113,
+   "f1": 0.11,
+   "iou": 0.058
+  },
+  "split": "west half calibrates, east half is held out (spatial holdout)"
+ },
+ "notes": [
+  "TEST DATA: procedurally generated. Not satellite observations. Run python3 -m pipeline.run_all for real data."
+ ]
+}
