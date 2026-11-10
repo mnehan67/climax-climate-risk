@@ -56,17 +56,6 @@ sh START_MAC_LINUX.sh
 sh RUN_PIPELINE_MAC_LINUX.sh
 ```
 
-## ☁️ Deployment
-
-For the complete API-backed site, deploy the repository to [Render](https://dashboard.render.com/) as a **Web Service** or apply the included `render.yaml` via **New → Blueprint**. `render.yaml` already sets the public binding and disables paid LLM calls on the public demo. GitHub Pages alone would not run the Python APIs.
-
-- **Build:** `python -m compileall -q server.py engine.py agent.py memo.py pipeline`
-- **Start:** `python server.py --no-browser`
-- **Environment:** `HOST=0.0.0.0`, `CLIMAX_PUBLIC=1`
-- **Health check:** `/api/health`
-
-A public demo should not receive bank customer data. To use optional Cesium ion imagery, add your own browser-visible `CESIUM_ION_TOKEN` to the hosting environment and restrict it to your deployment domain. Do not expose a paid Anthropic token without authentication and rate limits.
-
 ## 📊 Evidence & Validation
 
 The **standalone user-provided REAL audit** (`evidence/REAL_run_audit_REFERENCE.json`) reports the following *for its separate run*:
