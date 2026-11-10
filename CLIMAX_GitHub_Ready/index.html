@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#04100d">
+<title>CLIMAX · Floods that stay</title>
+<link href="assets/vendor/maplibre-gl.css" rel="stylesheet">
+<link href="assets/vendor/cesium/Widgets/widgets.css" rel="stylesheet">
+<link href="assets/style.css" rel="stylesheet">
+</head>
+<body>
+<div id="app" data-stage="idle">
+  <div id="map" class="map"></div>
+  <div id="mapB" class="map map-b hidden"></div>
+  <div id="swipe" class="swipe hidden"><div class="swipe-line"></div><button class="swipe-knob" aria-label="Drag to compare">⟷</button>
+    <span class="swipe-tag left">TERRAIN FORECAST<small>what a model would have said before the storm</small></span>
+    <span class="swipe-tag right">SATELLITE OBSERVED<small>what Sentinel-2 actually saw</small></span></div>
+  <canvas id="rain" class="rain" aria-hidden="true"></canvas><div id="flash" class="flash"></div>
+  <div id="vignette" class="vignette"></div>
+  <div id="testMark" class="test-mark hidden">TEST DATA · NOT SATELLITE OBSERVATIONS · RUN THE PIPELINE</div>
+
+  <header class="top">
+    <div class="brand"><svg viewBox="0 0 32 34" width="26" height="27" aria-hidden="true"><path d="M2 28 14 4l7 15 5-8 6 17H2Z" fill="#92dfb7"/><path d="M14 4 21 19l-6 9H2L14 4Z" fill="#19b16d"/><path d="m26 11 6 17H19l7-17Z" fill="#d4fbe0"/></svg><span>climax<b>.</b></span></div>
+    <div class="prov" id="prov"><i></i><span id="provText">LOADING</span></div>
+    <nav class="aois" id="aois" aria-label="Area"></nav>
+    <div class="actions">
+      <button id="storyBtn" class="btn primary">▶ PLAY STORY</button>
+      <button id="memoBtn" class="btn">MEMO ↗</button>
+      <button id="exportBtn" class="btn">AUDIT ↓</button>
+      <button id="rendBtn" class="btn ghost" title="Switch between CesiumJS (needs internet) and offline 3D">3D</button>
+      <button id="sourcesBtn" class="btn ghost">SOURCES</button>
+    </div>
+  </header>
+
+  <section class="caption" id="caption">
+    <div class="eyebrow"><span></span><b id="capEye">CBUAE CHALLENGE #1 · CLIMATE RISK FOR BANKS</b></div>
+    <h1 id="capTitle">Floods in Dubai<br><em>don't just hit. They stay.</em></h1>
+    <p id="capSub">We measure how long water stayed around every building from free satellite data, and turn it into credit risk.</p>
+    <div class="chips" id="capChips"></div>
+  </section>
+
+  <aside class="panel" id="panel">
+    <div class="tabs" role="tablist">
+      <button class="tab on" data-tab="impact">IMPACT</button>
+      <button class="tab" data-tab="evidence">EVIDENCE</button>
+      <button class="tab" data-tab="agent">AGENT <i id="agentDot"></i></button>
+    </div>
+    <div class="tabbody" id="tab-impact">
+      <div class="kpis">
+        <div><span>LOANS FLAGGED</span><strong id="kFlag">—</strong><small id="kFlagSub"></small></div>
+        <div><span>DUAL CHANNEL</span><strong id="kDual">—</strong><small>ops + collateral</small></div>
+      </div>
+      <div class="big"><span>Δ EXPECTED LOSS · PORTFOLIO</span><strong id="kDelta">—</strong>
+        <div class="split"><i id="splitPD"></i><i id="splitLGD"></i></div>
+        <small><b class="c-pd">■</b> duration → PD &nbsp; <b class="c-lgd">■</b> depth → LGD &nbsp;·&nbsp; <span id="kEad"></span></small></div>
+      <div class="ctrl">
+        <label>PD uplift per day of interruption <b id="betaV">0.10</b></label>
+        <input type="range" id="beta" min="0" max="0.3" step="0.01" value="0.10">
+        <div class="scen"><button id="scenBtn" class="pill">NEXT STORM · ×1.3 longer &amp; deeper</button><span id="scenDelta"></span></div>
+      </div>
+      <div class="qhead">REVIEW QUEUE <span id="qsub">synthetic loans · real buildings</span></div>
+      <div class="queue" id="queue"></div>
+    </div>
+    <div class="tabbody hidden" id="tab-evidence">
+      <div class="ev-head"><span id="evArea"></span><b id="evFlood"></b></div>
+      <div class="bars" id="bars"></div>
+      <div class="passes" id="passes"></div>
+      <div class="val" id="val"></div>
+      <div class="notes" id="notes"></div>
+    </div>
+    <div class="tabbody hidden" id="tab-agent">
+      <div class="console" id="console"></div>
+    </div>
+  </aside>
+
+  <footer class="bottom">
+    <div class="scrub">
+      <div class="scrub-head"><span id="dayLabel">BEFORE THE STORM</span><span id="dayStat"></span></div>
+      <div class="scrub-track" id="track"><div class="scrub-fill" id="trackFill"></div></div>
+      <div class="scrub-ctl"><button id="playDays" class="btn ghost sm">▶ DAYS</button>
+        <div class="layers" id="layers">
+          <button data-layer="water" class="on">WATER</button>
+          <button data-layer="persist">HOW LONG</button>
+          <button data-layer="depth">DEPTH</button>
+          <button data-layer="swipe">FORECAST vs REALITY</button>
+          <button data-layer="loans" class="on">LOANS</button>
+        </div></div>
+    </div>
+    <form class="ask" id="askForm" autocomplete="off">
+      <span class="ask-icon">✦</span>
+      <input id="askInput" placeholder="Ask CLIMAX… e.g. Which uninsured warehouses stayed wet 5+ days?" aria-label="Ask a question">
+      <button class="btn primary sm" type="submit">ASK</button>
+      <div class="sugg" id="sugg"></div>
+    </form>
+  </footer>
+
+  <div id="drawerBg" class="drawer-bg hidden"></div>
+  <aside id="drawer" class="drawer hidden" role="dialog" aria-modal="true"><button id="drawerX" class="x" aria-label="Close">×</button><div id="drawerBody"></div></aside>
+  <div id="toast" class="toast hidden" role="status"></div>
+  <div class="attrib">Contains modified Copernicus Sentinel data 2024 · Copernicus DEM © DLR/Airbus · © OpenStreetMap contributors (ODbL) · Loans synthetic</div>
+</div>
+<script src="assets/vendor/maplibre-gl.js"></script>
+<script>window.CESIUM_BASE_URL = 'assets/vendor/cesium/';</script>
+<script src="assets/vendor/cesium/Cesium.js"></script>
+<script src="assets/cesium3d.js"></script>
+<script src="assets/app.js" defer></script>
+</body>
+</html>
